@@ -1,92 +1,149 @@
-# netint_k8_device_plugin
+# Kubernetes Support for NETINT VPU
 
 
+  - [About](#about)
+  - [Prerequisites](#prerequisites)
+  - [Installations](#installations)
+    - [Install from Source](#install-from-source)
+    - [Install using pre-built containers](#install-using-pre-built-containers)
+  - [Verify the Installation](#verify-the-installation)
+  - [Configuration](#configuration)
+    - [Using a different Docker image](#using-a-different-docker-image)
+    - [Limit VPUs](#limit-vpus)
+  - [Example](#example)
 
-## Getting started
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## About
+The Kubernetes orchestration tool allows NETINT video transcoder devices to be managed as nodes. This section details the configuration and usage of NETINT video transcoder device with Kubernetes.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Prerequisites
 
-## Add your files
+This document assumes the user has Kubernetes already installed and is fimilar with the setup, configuration and management of Kubernetes.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## Installations
+
+There are two methods to install the device plugin: [Install from Source](Install-from-Source) or to [Install using pre-built containers](Install-using-pre-built-containers).
+
+### Install from Source
+
+Complie the NETINT k8 device plugin. This step requires Go to be installed.
+```
+make build
+```
+Create Docker image for k8s device plugin.
+```
+make buildImage
+```
+Install Docker image using helm, the k8s device plugin needs privileged mode.
+```
+make deploy         
+```
+
+### Install using pre-built containers
+
+Install Docker image using helm, the k8s device plugin needs privileged mode.
+```
+make deploy         
+```
+
+## Verify the Installation
+
+After successfully deploy Docker image, add a tag of each K8s node to enable NETINT card using below command.
+```
+kubectl label nodes xxx netint-device=enable
+```
+
+Verify the device plugin has been successfully installed with the `kubectl get pods -n kube-system` command. You should find the netint-device-plugin-#####, pod running with ready 1/1 and status should be running. 
 
 ```
-cd existing_repo
-git remote add origin https://git.netint.ca/public-github/netint_k8_device_plugin.git
-git branch -M main
-git push -uf origin main
+$ kubectl get pods -n kube-system
+NAME                               READY   STATUS    RESTARTS        AGE
+coredns-787d4945fb-jmmxn           1/1     Running   1 (3d19h ago)   3d20h
+etcd-minikube                      1/1     Running   1 (3d19h ago)   3d20h
+kube-apiserver-minikube            1/1     Running   1 (3d19h ago)   3d20h
+kube-controller-manager-minikube   1/1     Running   1 (3d19h ago)   3d20h
+kube-proxy-xk44j                   1/1     Running   1 (3d19h ago)   3d20h
+kube-scheduler-minikube            1/1     Running   1 (3d19h ago)   3d20h
+netint-device-plugin-t46v2         1/1     Running   0               29s
+netint-pod                         1/1     Running   0               29s
+storage-provisioner                1/1     Running   4 (3d19h ago)   3d20h
 ```
 
-## Integrate with your tools
+You can check how many cards have been detected by the plugin with the `kubectl describe nodes minikube` command. T4xx devices will show up as node resource under netint.ca/ASIC and Quadra devices will show up as a node resource under netint.ca/Quadra.
 
-- [ ] [Set up project integrations](https://git.netint.ca/public-github/netint_k8_device_plugin/-/settings/integrations)
+```
+Allocatable:
+  cpu:                12
+  ephemeral-storage:  240406076Ki
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             16006452Ki
+  netint.ca/ASIC:     0
+  netint.ca/Quadra:   3
+  pods:               110
+```
 
-## Collaborate with your team
+You can view what resources are being used currently under the same command.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+```
+Allocated resources:
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests      Limits
+  --------           --------      ------
+  cpu                1250m (10%)   1 (8%)
+  memory             2218Mi (14%)  4266Mi (27%)
+  ephemeral-storage  0 (0%)        0 (0%)
+  hugepages-1Gi      0 (0%)        0 (0%)
+  hugepages-2Mi      0 (0%)        0 (0%)
+  netint.ca/ASIC     0             0
+  netint.ca/Quadra   1             1
+Events:              <none>
+```
 
-## Test and Deploy
+## Configuration
 
-Use the built-in continuous integration in GitLab.
+### Using a Different Docker image
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+Each pod needs to have a container that at minimum has libxcoder installed in order to use the NETINT VPU cards. Optionally FFmpeg or Gstreamer can be installed.
 
-***
+> [!IMPORTANT]
+> The default container that pulled from Docker Hub only has support for the Quadra VPUs.
 
-# Editing this README
+Change the value of the `image` image parameter to use the desired image.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!).  Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+```yml
+  containers:
+  - name: netint-pod
+    image: netint/quadra_ubuntu-24.04_ffmpeg:latest
+```
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### Limit VPUs
 
-## Name
-Choose a self-explaining name for your project.
+To limit the number of VPUs that are available in each pod, the value for `netint.ca/ASIC` for T4xx and the `netint.ca/Quadra` for Quadra can be adjusted to the desired amount.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+```yml
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "500m"
+    netint.ca/ASIC: 1
+  limits:
+    memory: "128Mi"
+    cpu: "500m"
+    netint.ca/ASIC: 1
+  requests:
+    memory: "128Mi"
+    cpu: "500m"
+    netint.ca/Quadra: 1
+  limits:
+    memory: "128Mi"
+    cpu: "500m"
+    netint.ca/Quadra: 1
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## Example
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+NETINT has provided an example yaml file in `example/pod-with-netint.yaml` that can be used as a reference design.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.

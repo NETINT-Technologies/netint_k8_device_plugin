@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Values.podName }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    name: {{ .Values.podName }}
+spec:
+  dnsPolicy: ClusterFirstWithHostNet
+  serviceAccountName: {{ .Values.serviceAccountName }}
+  containers:
+    - name: {{ .Values.podName }}
+      image: {{ .Values.image }}
+      imagePullPolicy: {{ .Values.imagePullPolicy }}
+      command:
+        - /bin/sh
+        - -c
+        - "while true; do sleep 30; done"
+      securityContext:
+        privileged: {{ .Values.securityContext.privileged }}
+      ports:
+        - containerPort: {{ .Values.containerPort }}
+      resources:
+        requests:
+          memory: {{ .Values.resources.requests.memory }}
+          cpu: {{ .Values.resources.requests.cpu }}
+          netint.ca/Quadra: {{ .Values.resources.requests.netint }}
+        limits:
+          memory: {{ .Values.resources.limits.memory }}
+          cpu: {{ .Values.resources.limits.cpu }}
+          netint.ca/Quadra: {{ .Values.resources.limits.netint }}
+      volumeMounts:
+        - name: volume
+          mountPath: {{ .Values.volumeMount.mountPath }}
+  volumes:
+    - name: volume
+      hostPath:
+        type: Directory
+        path: {{ .Values.volumes.hostPath }}
+  nodeSelector:
+    kubernetes.io/hostname: {{ .Values.nodeSelector.hostname }}

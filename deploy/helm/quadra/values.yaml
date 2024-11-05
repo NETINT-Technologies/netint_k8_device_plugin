@@ -1,0 +1,22 @@
+podName: netint-pod
+namespace: kube-system
+serviceAccountName: netint-admin
+image: netint/quadra_ubuntu-24-04_ffmpeg:latest
+securityContext:
+  privileged: false
+containerPort: 80
+resources:
+  requests:
+    memory: "2Gi"
+    cpu: "500m"
+    netint: "1"
+  limits:
+    memory: "4Gi"
+    cpu: "1000m"
+    netint: "1"
+volumeMount:
+  mountPath: /home
+volumes:
+  hostPath: /files
+nodeSelector:
+  hostname: minikube
