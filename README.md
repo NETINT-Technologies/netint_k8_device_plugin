@@ -43,7 +43,7 @@ make deploy
 
 Install Docker image using helm, the k8s device plugin needs privileged mode.
 ```
-make deploy         
+make deploy-netinst
 ```
 
 ## Verify the Installation
@@ -65,7 +65,7 @@ kube-controller-manager-minikube   1/1     Running   1 (3d19h ago)   3d20h
 kube-proxy-xk44j                   1/1     Running   1 (3d19h ago)   3d20h
 kube-scheduler-minikube            1/1     Running   1 (3d19h ago)   3d20h
 netint-device-plugin-t46v2         1/1     Running   0               29s
-netint-pod                         1/1     Running   0               29s
+netint-pod-85dbcb69bb-5pp6q        1/1     Running   0               29s
 storage-provisioner                1/1     Running   4 (3d19h ago)   3d20h
 ```
 
@@ -144,6 +144,13 @@ resources:
 
 ## Example
 
+### Static pod file
+
 NETINT has provided an example yaml file in `example/pod-with-netint.yaml` that can be used as a reference design.
 
+### Helm
 
+Deploy pod with tools for Quadra VPUs:
+```
+make deploy-quadra NODE=miniqube HOST_PATH=/files
+```
