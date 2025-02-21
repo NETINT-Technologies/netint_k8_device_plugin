@@ -1,4 +1,4 @@
-podName: netint-pod
+deploymentName: netint-pod
 namespace: kube-system
 serviceAccountName: netint-admin
 image: netint/quadra_ubuntu-24-04_ffmpeg:latest
