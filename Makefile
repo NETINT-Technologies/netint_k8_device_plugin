@@ -2,6 +2,9 @@ IMAGE_VERSION = latest
 REGISTRY = netint
 IMAGE = ${REGISTRY}/vpu-k8-device-plugin:${IMAGE_VERSION}
 
+NODE := miniqube
+HOST_PATH := /files
+
 .PHONY: default build buildImage deploy undeploy upgrade dry-run
 default: deploy
 
@@ -18,16 +21,33 @@ buildImage:
 		echo "Error: Missing NETINT Device Plugin";\
 		echo "Please build the Device Plugin, then rebuild the image";\
 	fi
-deploy:
+
+deploy-netint:
 	helm install netint deploy/helm/netint
-	helm install quadra deploy/helm/quadra
-undeploy:
+
+deploy-quadra:
+	kubectl label node ${NODE} netint-device=enable --overwrite=true
+	helm install quadra deploy/helm/quadra --set "nodeSelector.hostname=${NODE},volumes.hostPath=${HOST_PATH}"
+
+deploy: deploy-netint deploy-quadra
+
+undeploy-netint:
 	helm uninstall netint
+
+undeploy-quadra:
 	helm uninstall quadra
-upgrade:
+
+undeploy: undeploy-netint undeploy-quadra
+
+upgrade-netint:
 	helm upgrade netint deploy/helm/netint
-	helm upgrade quadra deploy/helm/quadra
+
+upgrade-quadra:
+	kubectl label node ${NODE} netint-device=enable --overwrite=true
+	helm upgrade quadra deploy/helm/quadra --set "nodeSelector.hostname=${NODE},volumes.hostPath=${HOST_PATH}"
+
+upgrade: upgrade-netint upgrade-quadra
+
 dry-run:
 	helm install netint deploy/helm/netint --dry-run
-	helm install quadra deploy/helm/quadra --dry-run
-
+	helm install quadra deploy/helm/quadra --dry-run --set "nodeSelector.hostname=${NODE},volumes.hostPath=${HOST_PATH}"
