@@ -26,7 +26,6 @@ deploy-netint:
 	helm install netint deploy/helm/netint
 
 deploy-quadra:
-	kubectl label node ${NODE} netint-device=enable --overwrite=true
 	helm install quadra deploy/helm/quadra --set "nodeSelector.hostname=${NODE},volumes.hostPath=${HOST_PATH}"
 
 deploy: deploy-netint deploy-quadra
@@ -43,7 +42,6 @@ upgrade-netint:
 	helm upgrade netint deploy/helm/netint
 
 upgrade-quadra:
-	kubectl label node ${NODE} netint-device=enable --overwrite=true
 	helm upgrade quadra deploy/helm/quadra --set "nodeSelector.hostname=${NODE},volumes.hostPath=${HOST_PATH}"
 
 upgrade: upgrade-netint upgrade-quadra
