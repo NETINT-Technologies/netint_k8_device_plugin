@@ -152,5 +152,5 @@ NETINT has provided an example yaml file in `example/pod-with-netint.yaml` that 
 
 Deploy pod with tools for Quadra VPUs:
 ```
-make deploy-quadra NODE=miniqube HOST_PATH=/files
+make deploy-quadra NODE=minikube HOST_PATH=/files
 ```

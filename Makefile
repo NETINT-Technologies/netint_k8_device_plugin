@@ -2,7 +2,7 @@ IMAGE_VERSION = latest
 REGISTRY = netint
 IMAGE = ${REGISTRY}/vpu-k8-device-plugin:${IMAGE_VERSION}
 
-NODE := miniqube
+NODE := minikube
 HOST_PATH := /files
 
 .PHONY: default build buildImage deploy undeploy upgrade dry-run
