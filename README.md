@@ -22,7 +22,7 @@ This document assumes the user has Kubernetes already installed and is fimilar w
 
 ## Installations
 
-There are two methods to install the device plugin: [Install from Source](Install-from-Source) or to [Install using pre-built containers](Install-using-pre-built-containers).
+There are two methods to install the device plugin: [Install from Source](#install-from-source) or to [Install using pre-built containers](#install-using-pre-built-containers).
 
 ### Install from Source
 
@@ -43,7 +43,7 @@ make deploy
 
 Install Docker image using helm, the k8s device plugin needs privileged mode.
 ```
-make deploy-netinst
+make deploy-netint
 ```
 
 ## Verify the Installation
