@@ -224,7 +224,7 @@ func (s *NetintServer) RegisterToKubelet() error {
 // GetDevicePluginOptions returns options to be communicated with Device
 // Manager
 func (s *NetintServer) GetDevicePluginOptions(ctx context.Context, e *pluginapi.Empty) (*pluginapi.DevicePluginOptions, error) {
-	log.Infoln("GetDevicePluginOptions called")
+	log.Infof("GetDevicePluginOptions called\n")
 	return &pluginapi.DevicePluginOptions{PreStartRequired: true}, nil
 }
 
@@ -232,7 +232,7 @@ func (s *NetintServer) apiDevices() []*pluginapi.Device {
 	var pdevs []*pluginapi.Device
 	for _, d := range s.cachedDevices {
 		pdevs = append(pdevs, &d.Device)
-		log.Infoln("apiDevices dev = '%s', '%s'", d.Path, d.ID)
+		log.Infof("apiDevices dev = '%s', '%s'\n", d.Path, d.ID)
 	}
 	return pdevs
 }
@@ -240,8 +240,8 @@ func (s *NetintServer) apiDevices() []*pluginapi.Device {
 func (s *NetintServer) apiDeviceSpecs(filter []string) []*pluginapi.DeviceSpec {
 	var specs []*pluginapi.DeviceSpec
 
-	for _, d := range s.cachedDevices {
-		for _, id := range filter {
+	for _, id := range filter {
+		for _, d := range s.cachedDevices {
 			if d.ID == id {
 				spec := &pluginapi.DeviceSpec{
 					ContainerPath: d.Path,
@@ -258,6 +258,7 @@ func (s *NetintServer) apiDeviceSpecs(filter []string) []*pluginapi.DeviceSpec {
 					Permissions:   "rw",
 				}
 				specs = append(specs, spec)
+				break
 			}
 		}
 	}
@@ -291,11 +292,11 @@ func (s *NetintServer) ListAndWatch(e *pluginapi.Empty, srv pluginapi.DevicePlug
 			srv.Send(&pluginapi.ListAndWatchResponse{Devices: s.apiDevices()})
 		case d := <-s.unHealth:
 			d.Health = pluginapi.Unhealthy
-			log.Infoln("'%s' device marked unhealthy: %s", s.resourceName, d.Path)
+			log.Infof("'%s' device marked unhealthy: %s\n", s.resourceName, d.Path)
 			srv.Send(&pluginapi.ListAndWatchResponse{Devices: s.apiDevices()})
 		case d := <-s.health:
 			d.Health = pluginapi.Healthy
-			log.Infoln("'%s' device marked healthy: %s", s.resourceName, d.Path)
+			log.Infof("'%s' device marked healthy: %s\n", s.resourceName, d.Path)
 			srv.Send(&pluginapi.ListAndWatchResponse{Devices: s.apiDevices()})
 		}
 	}
@@ -305,7 +306,7 @@ func (s *NetintServer) ListAndWatch(e *pluginapi.Empty, srv pluginapi.DevicePlug
 // Plugin can run device specific operations and instruct Kubelet
 // of the steps to make the Device available in the container
 func (s *NetintServer) Allocate(ctx context.Context, reqs *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
-	log.Warnln("Allocate called")
+	log.Warnf("Allocate called\n")
 	responses := pluginapi.AllocateResponse{}
 	for _, req := range reqs.ContainerRequests {
 		for _, id := range req.DevicesIDs {
@@ -332,7 +333,7 @@ func (s *NetintServer) Allocate(ctx context.Context, reqs *pluginapi.AllocateReq
 // before each container start. Device plugin can run device specific operations
 // such as reseting the device before making devices available to the container
 func (s *NetintServer) PreStartContainer(ctx context.Context, req *pluginapi.PreStartContainerRequest) (*pluginapi.PreStartContainerResponse, error) {
-	log.Infoln("PreStartContainer called")
+	log.Infof("PreStartContainer called\n")
 	return &pluginapi.PreStartContainerResponse{}, nil
 }
 
@@ -366,13 +367,13 @@ func identifyDevice(devicePath string) bool {
 			return false
 		} else {
 			v := matchArr[1]
-			log.Infoln("find vid = %q", matchArr)
+			log.Infof("find vid = %q\n", matchArr)
 			vid, err := strconv.Atoi(v)
 			if vid == 7554 {
-				log.Infoln("Identify NETINT devices '%s' is OK", devicePath)
+				log.Infof("Identify NETINT devices '%s' is OK\n", devicePath)
 				return true
 			} else {
-				log.Warnf("NETINT devices '%s' vid wrong = '%G' err='%t'", devicePath, vid, err)
+				log.Warnf("NETINT devices '%s' vid wrong = '%G' err='%t'\n", devicePath, vid, err)
 				return false
 			}
 		}
@@ -461,7 +462,7 @@ func (s *NetintServer) initialize() error {
 				//niDevice.ID = string(sum[:])
 				niDevice.Health = pluginapi.Healthy
 				niDevice.Path = info.DevicePath
-				niDevice.ID = fmt.Sprintf("%s-%d", info.SerialNumber, i)
+				niDevice.ID = fmt.Sprintf("%s-%s-%d", info.SerialNumber, filepath.Base(info.DevicePath), i)
 				s.cachedDevices = append(s.cachedDevices, &niDevice)
 			}
 			log.Warnf("find device %s", info.DevicePath)
@@ -508,7 +509,7 @@ func checkHealth(s *NetintServer) {
 						//niDevice.ID = string(sum[:])
 						niDevice.Health = pluginapi.Healthy
 						niDevice.Path = info.DevicePath
-						niDevice.ID = fmt.Sprintf("%s-%d", info.SerialNumber, i)
+						niDevice.ID = fmt.Sprintf("%s-%s-%d", info.SerialNumber, filepath.Base(info.DevicePath) i)
 						devices = append(devices, &niDevice)
 						if !needUpdate {
 							needUpdate = true
