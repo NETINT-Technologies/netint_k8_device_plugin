@@ -509,7 +509,7 @@ func checkHealth(s *NetintServer) {
 						//niDevice.ID = string(sum[:])
 						niDevice.Health = pluginapi.Healthy
 						niDevice.Path = info.DevicePath
-						niDevice.ID = fmt.Sprintf("%s-%s-%d", info.SerialNumber, filepath.Base(info.DevicePath) i)
+						niDevice.ID = fmt.Sprintf("%s-%s-%d", info.SerialNumber, filepath.Base(info.DevicePath), i)
 						devices = append(devices, &niDevice)
 						if !needUpdate {
 							needUpdate = true
